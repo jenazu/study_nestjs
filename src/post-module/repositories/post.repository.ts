@@ -12,4 +12,8 @@ export class PostRepository extends BaseRepository<Post> {
   ) {
     super(PostModule);
   }
+
+  async countDocuments(filter) {
+    return this.PostModule.countDocuments(filter);
+  }
 }

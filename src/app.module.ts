@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { PostModule } from './post-module/post-module.module';
 import { UserModuleModule } from './user-module/user-module.module';
 import { MediaModule } from './media/media.module';
+import { SubscriberModule } from './subscriber/subscriber.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MediaModule } from './media/media.module';
     }),
     UserModuleModule,
     MediaModule,
+    SubscriberModule,
   ],
   controllers: [AppController],
   providers: [

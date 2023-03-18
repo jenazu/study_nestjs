@@ -1,3 +1,4 @@
+import { PaginationPostDto } from './../dto/post.dto';
 import { AuthGuard } from '@nestjs/passport';
 import {
   Body,
@@ -20,8 +21,8 @@ import { PostService } from '../post-service/post-service';
 export class PostsController {
   constructor(private readonly postService: PostService) {}
   @Get()
-  getAllPost() {
-    return this.postService.getAllPost();
+  getAllPost(@Query() { page, limit, start }: PaginationPostDto) {
+    return this.postService.getAllPost(page, limit, start);
   }
 
   @Get(':id')
@@ -47,7 +48,14 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Get('user/all')
   async getPostUser(@Req() req: any) {
-    await req.user.populate('posts').execPopulate();
+    await req.user
+      .populate([
+        {
+          path: 'posts',
+          // select: 'title'
+        },
+      ])
+      .execPopulate();
     return req.user.posts;
   }
 
@@ -59,5 +67,9 @@ export class PostsController {
   @Get('get/categories')
   async getByCategories(@Query('category_ids') category_ids) {
     return await this.postService.getByCategories(category_ids);
+  }
+  @Get('get/array')
+  async getByArray() {
+    return this.postService.getByArray();
   }
 }
