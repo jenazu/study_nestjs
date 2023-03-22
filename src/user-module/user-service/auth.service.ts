@@ -20,6 +20,10 @@ export class AuthService {
     };
   }
 
+  async getAccess2FA(user) {
+    return this._createToken(user, true);
+  }
+
   async login(loginUserDto: LoginUserDto) {
     const user = await this.userService.findByLogin(loginUserDto);
     const token = await this._createToken(user);
@@ -37,9 +41,14 @@ export class AuthService {
     return user;
   }
 
-  private async _createToken({ email }, refresh = true) {
+  private async _createToken(
+    { email },
+    isSecondFactorAuthenticated = false,
+    refresh = true,
+  ) {
     const accessToken = this.jwtService.sign({
       email,
+      isSecondFactorAuthenticated,
     });
     if (refresh) {
       const refreshToken = this.jwtService.sign(

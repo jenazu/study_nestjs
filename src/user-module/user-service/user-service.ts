@@ -1,11 +1,18 @@
+import { MailerService } from '@nest-modules/mailer';
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Queue } from 'bull';
 import { CreateUserDto, LoginUserDto } from '../dto/user.dto';
 import { UserRepository } from '../repositories/user.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    @InjectQueue('send-mail')
+    private sendMail: Queue,
+  ) {}
 
   async create(userDto: CreateUserDto) {
     userDto.password = await bcrypt.hash(userDto.password, 10);
@@ -15,7 +22,40 @@ export class UserService {
     if (userInDb) {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
+
+    // await this.mailerService.sendMail({
+    //   to: userDto.email,
+    //   subject: 'Welcome to my Website',
+    //   template: './welcome',
+    //   context: {
+    //     name: userDto.name,
+    //   },
+    // });
+
+    await this.sendMail.add(
+      'register',
+      {
+        to: userDto.email,
+        name: userDto.name,
+      },
+      {
+        removeOnComplete: true,
+      },
+    );
+
     return await this.userRepository.create(userDto);
+  }
+
+  async setTwoFactorAuthenticationSecret(secret, user_id) {
+    return this.userRepository.findByIdAndUpdate(user_id, {
+      twoFactorAuthenticationSecret: secret,
+    });
+  }
+
+  async turnOnTwoFactorAuthentication(user_id: string) {
+    return this.userRepository.findByIdAndUpdate(user_id, {
+      isTwoFactorAuthenticationEnabled: true,
+    });
   }
 
   async findByLogin({ email, password }: LoginUserDto) {

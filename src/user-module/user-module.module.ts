@@ -1,3 +1,7 @@
+import { BullModule } from '@nestjs/bull';
+import { JwtTwoFactorStrategy } from './jwtTwoFactor.strategy';
+import { TwoFactorAuthenticationService } from './user-service/twoFactorAuthentication.service';
+import { TwoFactorAuthenticationController } from './controller/twoFactorAuthentication.controller';
 import { Module } from '@nestjs/common';
 import { UserService } from './user-service/user-service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -10,6 +14,7 @@ import { UserRepository } from './repositories/user.repository';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserController } from './controller/user.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { EmailConsumer } from './consumers/email.consumer';
 
 @Module({
   imports: [
@@ -30,9 +35,24 @@ import { JwtStrategy } from './jwt.strategy';
       }),
       inject: [ConfigService],
     }),
+    BullModule.registerQueue({
+      name: 'send-mail',
+    }),
   ],
-  providers: [UserService, AuthService, UserRepository, JwtStrategy],
-  controllers: [AuthController, UserController],
+  providers: [
+    UserService,
+    AuthService,
+    UserRepository,
+    JwtStrategy,
+    TwoFactorAuthenticationService,
+    JwtTwoFactorStrategy,
+    EmailConsumer,
+  ],
+  controllers: [
+    AuthController,
+    UserController,
+    TwoFactorAuthenticationController,
+  ],
   exports: [UserService],
 })
 export class UserModuleModule {}
